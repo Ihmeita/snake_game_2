@@ -2,6 +2,7 @@ import pygame
 import time
 import random
 
+# Initialize pygame
 pygame.init()
 
 # Colors
@@ -16,6 +17,7 @@ blue = (50, 153, 213)
 dis_width = 800
 dis_height = 600
 
+# Create display
 dis = pygame.display.set_mode((dis_width, dis_height))
 pygame.display.set_caption('Snake Game')
 
@@ -68,29 +70,7 @@ def gameLoop():
                         game_over = True
                         game_close = False
                     if event.key == pygame.K_c:
-def start_menu():
-    menu = True
-    while menu:
-        dis.fill(blue)
-        message("Welkom bij Snake!", white)
-        message("1. Spelen", green)
-        message("2. Afsluiten", red)
-        pygame.display.update()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                quit()
-            if event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_1:
-                    menu = False
-                    gameLoop()
-                elif event.key == pygame.K_2:
-                    pygame.quit()
-                    quit()
-
-# Start the game
-start_menu()
+                        gameLoop()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -147,4 +127,55 @@ start_menu()
     pygame.quit()
     quit()
 
-gameLoop()
+def start_menu():
+    menu_active = True
+    while menu_active:
+        dis.fill(blue)
+        
+        # Titel
+        titel = font_style.render("Welkom bij Snake!", True, white)
+        titel_rect = titel.get_rect(center=(dis_width/2, dis_height/3))
+        dis.blit(titel, titel_rect)
+        
+        # Speel knop
+        speel_tekst = font_style.render("1. Spelen", True, green)
+        speel_rect = speel_tekst.get_rect(center=(dis_width/2, dis_height/2))
+        pygame.draw.rect(dis, black, speel_rect.inflate(20, 10), 2)
+        dis.blit(speel_tekst, speel_rect)
+        
+        # Sluit knop
+        sluit_tekst = font_style.render("2. Afsluiten", True, red)
+        sluit_rect = sluit_tekst.get_rect(center=(dis_width/2, dis_height/2 + 50))
+        pygame.draw.rect(dis, black, sluit_rect.inflate(20, 10), 2)
+        dis.blit(sluit_tekst, sluit_rect)
+        
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                menu_active = False
+                pygame.quit()
+                return
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    gameLoop()
+                elif event.key == pygame.K_2:
+                    menu_active = False
+                    pygame.quit()
+                    return
+            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                muis_pos = pygame.mouse.get_pos()
+                if speel_rect.collidepoint(muis_pos):
+                    gameLoop()
+                elif sluit_rect.collidepoint(muis_pos):
+                    menu_active = False
+                    pygame.quit()
+                    return
+
+    pygame.quit()
+    quit()
+
+# Start the game
+start_menu()
