@@ -68,7 +68,29 @@ def gameLoop():
                         game_over = True
                         game_close = False
                     if event.key == pygame.K_c:
-                        gameLoop()
+def start_menu():
+    menu = True
+    while menu:
+        dis.fill(blue)
+        message("Welkom bij Snake!", white)
+        message("1. Spelen", green)
+        message("2. Afsluiten", red)
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1:
+                    menu = False
+                    gameLoop()
+                elif event.key == pygame.K_2:
+                    pygame.quit()
+                    quit()
+
+# Start the game
+start_menu()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
