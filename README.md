@@ -2,11 +2,10 @@
 
 
 
-**Classic Snake game** with modern features: persistent highscore, intuitive controls, and Dutch localization.
+**Classic Snake game** with modern features: persistent highscore, intuitive controls.
 
 Features
 - 🏆 **Persistent Highscore** - Saves your best score between sessions
-- 🌍 **Dutch interface** - translated UI
 - 🕹️ **Responsive controls** - Keyboard (arrows) + Mouse support
 - 🔄 **Infinite gameplay** - Snake wraps around screen edges
 - 🎨 **Clean UI** - Animated buttons and score display
