@@ -1,5 +1,4 @@
-🐍 Snake Game (Nederlandse versie)
-
+🐍 Snake Game
 
 
 **Classic Snake game** with modern features: persistent highscore, intuitive controls.
