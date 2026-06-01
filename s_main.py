@@ -28,10 +28,37 @@ SPECIAL_APPLE_CHANCE = 0.2  # 20% chance to spawn special apple
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Snake Game')
 
-# Fonts
-font_small = pygame.font.SysFont("arial", 20)
-font_medium = pygame.font.SysFont("arial", 30)
-font_large = pygame.font.SysFont("arial", 50, bold=True)
+# NEW: Improved bold fonts with outlines
+font_small = pygame.font.SysFont("Arial Black", 20)
+font_medium = pygame.font.SysFont("Arial Black", 30, bold=True)
+font_large = pygame.font.SysFont("Arial Black", 50, bold=True)
+
+# NEW: Background loading
+background = None
+try:
+    bg_path = os.path.join(os.path.dirname(__file__), "background.jpg")
+    if os.path.exists(bg_path):
+        background = pygame.image.load(bg_path).convert()
+        background = pygame.transform.scale(background, (WIDTH, HEIGHT))
+except:
+    background = None
+
+
+# NEW: Enhanced text rendering with outline
+def show_text(text, font, color, y_offset=0, outline_color=None):
+    """Render text with optional outline"""
+    if outline_color:
+        # Render outline by slightly offsetting the text
+        offsets = [(-1, -1), (1, -1), (-1, 1), (1, 1)]
+        for dx, dy in offsets:
+            text_outline = font.render(text, True, outline_color)
+            text_rect = text_outline.get_rect(center=(WIDTH // 2 + dx, HEIGHT // 2 + y_offset + dy))
+            screen.blit(text_outline, text_rect)
+
+    # Main text
+    text_surface = font.render(text, True, color)
+    text_rect = text_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2 + y_offset))
+    screen.blit(text_surface, text_rect)
 
 
 def load_highscore():
@@ -47,20 +74,18 @@ def save_highscore(score):
         f.write(str(score))
 
 
+# NEW: Improved food drawing with white outline
 def draw_food(x, y, is_special):
-    """Draw food on screen
-    Args:
-        is_special (bool): If True, draws red special apple
-    """
+    """Draw food with white outline"""
     color = RED_APPLE if is_special else GREEN
+    # White outline
+    pygame.draw.rect(screen, WHITE, [x - 1, y - 1, BLOCK_SIZE + 2, BLOCK_SIZE + 2], 1)
+    # Main food color
     pygame.draw.rect(screen, color, [x, y, BLOCK_SIZE, BLOCK_SIZE])
 
 
 def generate_food(snake=None):
-    """Generate food at valid position (not on snake)
-    Returns:
-        tuple: (x_pos, y_pos, is_special)
-    """
+    """Generate food at valid position (not on snake)"""
     if snake is None:
         snake = []
 
@@ -73,12 +98,6 @@ def generate_food(snake=None):
             return food_x, food_y, is_special
 
 
-def show_text(text, font, color, y_offset=0):
-    text_surface = font.render(text, True, color)
-    text_rect = text_surface.get_rect(center=(WIDTH // 2, HEIGHT // 2 + y_offset))
-    screen.blit(text_surface, text_rect)
-
-
 def game_loop():
     x, y = WIDTH // 2, HEIGHT // 2
     dx, dy = BLOCK_SIZE, 0
@@ -88,8 +107,9 @@ def game_loop():
     paused = False
     game_over = False
     highscore = load_highscore()
+    snake_outline = GREEN  # NEW: Initialize snake outline color
+
     while True:
-        # Handle events
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 return "quit"
@@ -100,7 +120,6 @@ def game_loop():
                 elif paused and event.key == pygame.K_q:
                     return "menu"
 
-                # Movement controls (only when not paused)
                 if not paused and not game_over:
                     if event.key == pygame.K_LEFT and dx == 0:
                         dx, dy = -BLOCK_SIZE, 0
@@ -116,24 +135,30 @@ def game_loop():
                     return "menu"
 
         if paused:
-            screen.fill(DARK_BLUE)
-            show_text("PAUSED", font_large, WHITE, -30)
-            show_text("Press P to continue", font_medium, WHITE, 30)
+            if background:
+                screen.blit(background, (0, 0))
+            else:
+                screen.fill(DARK_BLUE)
+            show_text("PAUSED", font_large, WHITE, -30, BLACK)  # NEW: With outline
+            show_text("Press P to continue", font_medium, WHITE, 30, BLACK)
             pygame.display.update()
             clock.tick(FPS)
             continue
 
         if game_over:
-            screen.fill(BLUE)
-            show_text("GAME OVER", font_large, RED, -50)
-            show_text(f"Score: {length - 1}", font_medium, WHITE, 0)
-            show_text("Press SPACE to restart", font_medium, WHITE, 50)
-            show_text("or Q to menu", font_small, WHITE, 90)
+            if background:
+                screen.blit(background, (0, 0))
+            else:
+                screen.fill(BLUE)
+            show_text("GAME OVER", font_large, RED, -50, BLACK)  # NEW: With outline
+            show_text(f"Score: {length - 1}", font_medium, WHITE, 0, BLACK)
+            show_text("Press SPACE to restart", font_medium, WHITE, 50, BLACK)
+            show_text("or Q to menu", font_small, WHITE, 90, BLACK)
             pygame.display.update()
             clock.tick(FPS)
             continue
 
-        # Move snake
+        # Game logic
         x += dx
         y += dy
 
@@ -147,22 +172,27 @@ def game_loop():
         elif y < 0:
             y = HEIGHT - BLOCK_SIZE
 
-        # Update snake body
         snake.append([x, y])
         if len(snake) > length:
             del snake[0]
 
-        # Check self-collision
+        # Collision check
         for block in snake[:-1]:
             if block == [x, y]:
                 game_over = True
 
         # Drawing
-        screen.fill(BLUE)
+        if background:
+            screen.blit(background, (0, 0))
+        else:
+            screen.fill(BLUE)
+
+        # Draw food
         draw_food(food_x, food_y, is_special)
 
-        # Draw snake
+        # NEW: Enhanced snake drawing with dynamic outline
         for block in snake:
+            pygame.draw.rect(screen, snake_outline, [block[0] - 1, block[1] - 1, BLOCK_SIZE + 2, BLOCK_SIZE + 2], 1)
             pygame.draw.rect(screen, BLACK, [block[0], block[1], BLOCK_SIZE, BLOCK_SIZE])
 
         # Display score
@@ -173,12 +203,12 @@ def game_loop():
 
         # Check food collision
         if x == food_x and y == food_y:
-            length += 3 if is_special else 1  # Special apple gives +3 length
+            length += 3 if is_special else 1
+            snake_outline = RED_APPLE if is_special else GREEN  # NEW: Change outline color
             food_x, food_y, is_special = generate_food(snake)
-            
-            # Show special apple notification
+
             if is_special:
-                special_text = font_small.render("SPECIAL APPLE!", True, RED_APPLE)
+                special_text = font_small.render("SPECIAL APPLE!", True, WHITE)
                 screen.blit(special_text, [10, 70])
 
             if length - 1 > highscore:
@@ -188,13 +218,18 @@ def game_loop():
         pygame.display.update()
         clock.tick(FPS)
 
+
 def main_menu():
     """Main menu screen"""
     while True:
-        screen.fill(BLUE)
-        show_text("SNAKE GAME", font_large, WHITE, -100)
+        if background:
+            screen.blit(background, (0, 0))
+        else:
+            screen.fill(BLUE)
 
-        # Display controls
+        # NEW: Improved menu text with outlines
+        show_text("SNAKE GAME", font_large, WHITE, -100, BLACK)
+
         controls = [
             "ARROWS - Move",
             "P - Pause",
@@ -203,13 +238,9 @@ def main_menu():
         ]
 
         for i, control in enumerate(controls):
-            control_text = font_medium.render(control, True, WHITE)
-            screen.blit(control_text, [WIDTH // 2 - control_text.get_width() // 2,
-                                       HEIGHT // 2 + i * 40])
+            show_text(control, font_medium, WHITE, -50 + i * 40, BLACK)
 
-        # Start prompt
-        start_text = font_medium.render("Press SPACE to start", True, GREEN)
-        screen.blit(start_text, [WIDTH // 2 - start_text.get_width() // 2, HEIGHT - 100])
+        show_text("Press SPACE to start", font_medium, GREEN, 100, BLACK)
 
         pygame.display.update()
 
@@ -223,19 +254,14 @@ def main_menu():
                     return "quit"
 
 
-# Main game flow
 def run_game():
     """Manages game states"""
     while True:
-        # Start with menu
         menu_action = main_menu()
         if menu_action == "quit":
             break
 
-        # Start game
         game_result = game_loop()
-
-        # Handle game over
         while game_result == "restart":
             game_result = game_loop()
 
