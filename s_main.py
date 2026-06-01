@@ -11,7 +11,7 @@ clock = pygame.time.Clock()
 # Game settings
 WIDTH, HEIGHT = 800, 600
 BLOCK_SIZE = 20
-FPS = 15
+FPS = 10
 HIGHSCORE_FILE = os.path.join(os.path.expanduser("~"), "snake_highscore.txt")
 
 # Colors
@@ -21,6 +21,8 @@ RED = (213, 50, 80)
 GREEN = (0, 255, 0)
 BLUE = (50, 153, 213)
 DARK_BLUE = (0, 0, 100)
+RED_APPLE = (255, 0, 0)  # Special red apple color
+SPECIAL_APPLE_CHANCE = 0.2  # 20% chance to spawn special apple
 
 # Create screen
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -45,12 +47,20 @@ def save_highscore(score):
         f.write(str(score))
 
 
-def draw_food(x, y):
-    pygame.draw.rect(screen, GREEN, [x, y, BLOCK_SIZE, BLOCK_SIZE])
+def draw_food(x, y, is_special):
+    """Draw food on screen
+    Args:
+        is_special (bool): If True, draws red special apple
+    """
+    color = RED_APPLE if is_special else GREEN
+    pygame.draw.rect(screen, color, [x, y, BLOCK_SIZE, BLOCK_SIZE])
 
 
 def generate_food(snake=None):
-    """Generate food at valid position (not on snake)"""
+    """Generate food at valid position (not on snake)
+    Returns:
+        tuple: (x_pos, y_pos, is_special)
+    """
     if snake is None:
         snake = []
 
@@ -59,7 +69,8 @@ def generate_food(snake=None):
         food_y = random.randint(0, (HEIGHT - BLOCK_SIZE) // BLOCK_SIZE) * BLOCK_SIZE
 
         if [food_x, food_y] not in snake:
-            return food_x, food_y
+            is_special = random.random() < SPECIAL_APPLE_CHANCE
+            return food_x, food_y, is_special
 
 
 def show_text(text, font, color, y_offset=0):
@@ -73,7 +84,7 @@ def game_loop():
     dx, dy = BLOCK_SIZE, 0
     snake = []
     length = 1
-    food_x, food_y = generate_food()
+    food_x, food_y, is_special = generate_food()
     paused = False
     game_over = False
     highscore = load_highscore()
@@ -148,7 +159,7 @@ def game_loop():
 
         # Drawing
         screen.fill(BLUE)
-        draw_food(food_x, food_y)
+        draw_food(food_x, food_y, is_special)
 
         # Draw snake
         for block in snake:
@@ -162,8 +173,13 @@ def game_loop():
 
         # Check food collision
         if x == food_x and y == food_y:
-            food_x, food_y = generate_food(snake)
-            length += 1
+            length += 3 if is_special else 1  # Special apple gives +3 length
+            food_x, food_y, is_special = generate_food(snake)
+            
+            # Show special apple notification
+            if is_special:
+                special_text = font_small.render("SPECIAL APPLE!", True, RED_APPLE)
+                screen.blit(special_text, [10, 70])
 
             if length - 1 > highscore:
                 highscore = length - 1
