@@ -19,11 +19,12 @@ Quick Start
 python s_main.py
 
 4. Controls:
-- 1/ENTER - Start game  
-- 2/ESC - Quit  
+- SPACE - Start game  
+- ESC - Quit  
 - Arrow keys - Move snake  
-- C - Restart after Game Over  
+- SPACE - Restart after Game Over  
 - Q - Return to menu
+- P - Pause game
 
 
 Project Structure
@@ -34,6 +35,8 @@ snake/
 ├── requirements.txt
 
 ├── .gitignore
+
+├── background.jpg
 
 Customization
 - Change colors: Edit the RGB values at the top of s_main.py
