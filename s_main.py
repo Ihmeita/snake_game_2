@@ -24,7 +24,14 @@ DARK_BLUE = (0, 0, 100)
 RED_APPLE = (255, 0, 0)  # Special red apple color
 SPECIAL_APPLE_CHANCE = 0.2  # 20% chance to spawn special apple
 
-# Create screen
+# Sound effects
+eat_sound = None
+death_sound = None
+try:
+    eat_sound = pygame.mixer.Sound("sounds/eat.wav")
+    death_sound = pygame.mixer.Sound("sounds/death.wav")
+except:
+    print("Could not load sound effects")
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 pygame.display.set_caption('Snake Game')
 
@@ -179,6 +186,8 @@ def game_loop():
         # Collision check
         for block in snake[:-1]:
             if block == [x, y]:
+                if death_sound:
+                    death_sound.play()
                 game_over = True
 
         # Drawing
@@ -203,6 +212,8 @@ def game_loop():
 
         # Check food collision
         if x == food_x and y == food_y:
+            if eat_sound:
+                eat_sound.play()
             length += 3 if is_special else 1
             snake_outline = RED_APPLE if is_special else GREEN  # NEW: Change outline color
             food_x, food_y, is_special = generate_food(snake)
@@ -221,6 +232,15 @@ def game_loop():
 
 def main_menu():
     """Main menu screen"""
+    # Initialize music
+    pygame.mixer.init()
+    try:
+        pygame.mixer.music.load("sounds/menu_music.mp3")
+        pygame.mixer.music.set_volume(0.5)  # Set volume to 50%
+        pygame.mixer.music.play(-1)  # Loop indefinitely
+    except:
+        print("Could not load music file")
+
     while True:
         if background:
             screen.blit(background, (0, 0))
@@ -240,17 +260,20 @@ def main_menu():
         for i, control in enumerate(controls):
             show_text(control, font_medium, WHITE, -50 + i * 40, BLACK)
 
-        show_text("Press SPACE to start", font_medium, GREEN, 100, BLACK)
+        show_text("Press SPACE to start", font_medium, GREEN, 140, BLACK)
 
         pygame.display.update()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                pygame.mixer.music.stop()
                 return "quit"
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
+                    pygame.mixer.music.fadeout(500)  # Fade out over 0.5s
                     return "start"
                 elif event.key == pygame.K_q:
+                    pygame.mixer.music.stop()
                     return "quit"
 
 
