@@ -1,49 +1,58 @@
-🐍 Snake Game
+A modern Python implementation of the classic Snake game (created with assistance from OpenCode AI) with:
+- Multiple gameplay locations (Forest, Desert, City)
+- Menu system with background music
+- Location-specific music and visuals
+- High score tracking
+- Sound effects for eating and game over
 
+## Features
+- **Three Unique Locations**: Each with its own theme, background image, and original soundtrack created by [Imro69](https://soundcloud.com/imro69)
+- **Audio System**: Background music and sound effects
+- **Menu Navigation**: Choose locations with keyboard (UP/DOWN arrows)
+- **High Scores**: Saved and displayed for each location
+- **Game Controls**: Arrow keys to move, ESC to return to menu, R to restart
+-  (Note: Desert location will eventually be renamed to Galaxy)
 
-**Classic Snake game** with modern features: persistent highscore, intuitive controls.
-
-Features
-- 🏆 **Persistent Highscore** - Saves your best score between sessions
-- 🕹️ **Responsive controls** - Keyboard (arrows) + Mouse support
-- 🔄 **Infinite gameplay** - Snake wraps around screen edges
-- 🎨 **Clean UI** - Animated buttons and score display
-
-Quick Start
-
-1. Install requirements:
-   ```bash
+## Installation
+1. Clone this repository:
+   ```
+   git clone https://github.com/Ihmeita/snake_game_2.git
+   ```
+2. Install dependencies:
+   ```
    pip install -r requirements.txt
-   
-2. Run the game:
-python s_main.py
+   ```
 
-4. Controls:
-- SPACE - Start game  
-- ESC - Quit  
-- Arrow keys - Move snake  
-- SPACE - Restart after Game Over  
-- Q - Return to menu
-- P - Pause game
+## Requirements
+- Python 3.7+
+- Pygame
 
+## How to Play
+1. Run `main.py`
+2. Use UP/DOWN arrows to select location (Forest, Desert, City)
+3. Press ENTER to start
+4. Use arrow keys to control the snake
+5. Eat food to grow longer and increase score
+6. Avoid walls and your own tail
+7. Press R to restart or ESC to return to menu
 
-Project Structure
-snake/
+## File Structure
+```
+assets/
+    BG_images/     # Background images for each location
+    sounds/        # Music and sound effects
+game/             # Core game logic
+    locations/     # Location-specific implementations
+    engine.py      # Game engine basics
+    food.py        # Food mechanics
+    game_states.py # Game states management
+    highscore.py   # High score tracking
+    menu.py        # Menu system
+    snake.py       # Snake mechanics
+    utils.py       # Helper functions
+main.py           # Main game loop
+requirements.txt  # Dependency list
+```
 
-├── s_main.py
-
-├── requirements.txt
-
-├── .gitignore
-
-├── background.jpg
-
-Customization
-- Change colors: Edit the RGB values at the top of s_main.py
-- Adjust speed: Modify snake_speed variable
-- Highscore location: Change highscore_path if needed
-
-Notes
-- Highscores are saved to:  
-C:\Users\[YourUsername]\snake_highscore.txt (Windows)  
- or current directory if alternate path is set
+## Contributing
+Contributions are welcome! Please open an issue or pull request for any bugs or feature requests.
