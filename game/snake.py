@@ -83,14 +83,18 @@ class Snake:
                 self.death_sound.play()
 
     def eat_food(self, food):
-        """Handle food consumption"""
-        if self.x == food.x and self.y == food.y:
+        """Handle food consumption with collision detection"""
+        # Use food's logical size (38px) for collision detection
+        snake_rect = pygame.Rect(self.x, self.y, self.block_size, self.block_size)
+        food_rect = pygame.Rect(food.x, food.y, food.block_size, food.block_size)
+        
+        if snake_rect.colliderect(food_rect):
             if food.is_special:
                 self.length += 3
-                self.outline_color = (255, 192, 203)  # Pink outline (matches special food)
+                self.outline_color = (255, 192, 203)  # Pink outline
             else:
                 self.length += 1
-                self.outline_color = (0, 255, 0)  # Green outline (matches normal food)
+                self.outline_color = (0, 255, 0)  # Green outline
             
             self.score = self.length - 1
             if self.eat_sound:

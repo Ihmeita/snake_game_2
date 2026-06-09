@@ -30,6 +30,11 @@ class GameEngine:
         """Load game assets with error handling."""
         try:
             assets_path = Path(__file__).parent / 'assets'
+            
+            # Create assets directory if it doesn't exist
+            assets_path.mkdir(exist_ok=True)
+            (assets_path / 'images').mkdir(exist_ok=True)
+            (assets_path / 'sounds').mkdir(exist_ok=True)
 
             # Load sounds
             sound_files = {
@@ -42,6 +47,10 @@ class GameEngine:
                 full_path = assets_path / 'sounds' / filename
                 if full_path.exists():
                     self.assets['sounds'][name] = pygame.mixer.Sound(full_path)
+                    
+            # Load images (add any existing images to assets dict)
+            self.assets_path = str(assets_path)
+            
         except Exception as e:
             print(f"Error loading assets: {e}")
 
