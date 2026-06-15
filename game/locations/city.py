@@ -3,8 +3,8 @@ import pygame
 import os
 
 class CityLocation(Location):
-    def __init__(self, width=800, height=600):
-        super().__init__(width, height)
+    def __init__(self, width=800, height=600, block_size=40):
+        super().__init__(width, height, block_size)
         self.background = pygame.image.load(os.path.join("assets", "BG_images", "city.jpg"))
         self.rules = LocationRules(
             speed_modifier=1.0,

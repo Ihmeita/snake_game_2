@@ -4,8 +4,8 @@ import random
 import os
 
 class ForestLocation(Location):
-    def __init__(self, width=800, height=600):
-        super().__init__(width, height)
+    def __init__(self, width=800, height=600, block_size=40):
+        super().__init__(width, height, block_size)
         self.rules = LocationRules(
             speed_modifier=0.4,
             food_value=2,

@@ -9,9 +9,10 @@ class LocationRules:
     special_effect: str = None
 
 class Location:
-    def __init__(self, width=800, height=600):
+    def __init__(self, width=800, height=600, block_size=20):
         self.width = width
         self.height = height
+        self.block_size = block_size
         self.obstacles = []
         self.rules = LocationRules()
         self.background = None

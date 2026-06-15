@@ -3,30 +3,7 @@ Game State Management
 Handles transitions between different game states.
 """
 
-from enum import Enum, auto
-from typing import Dict, Any, Optional
-from dataclasses import dataclass
-from .menu import MenuSystem, MenuItem, MenuAction
-import pygame
-
-
-class GameState(Enum):
-    """All possible game states"""
-    MAIN_MENU = auto()
-    LOCATION_SELECT = auto()
-    PLAYING = auto()
-    PAUSED = auto()
-    GAME_OVER = auto()
-
-
-@dataclass
-class GameContext:
-    """Shared game data between states"""
-    current_location: Optional[str] = None
-    player_score: int = 0
-    high_score: int = 0
-    settings: Dict[str, Any] = None
-
+from .locations import ForestLocation, DesertLocation, CityLocation, MinefieldLocation
 
 class StateManager:
     """
@@ -61,6 +38,18 @@ class StateManager:
             ]
         )
 
+        # Location selection menu
+        self.location_menu = MenuSystem(
+            "Select Location",
+            [
+                MenuItem("Forest", MenuAction.START_GAME, {"location": ForestLocation}),
+                MenuItem("Desert", MenuAction.START_GAME, {"location": DesertLocation}),
+                MenuItem("City", MenuAction.START_GAME, {"location": CityLocation}),
+                MenuItem("Minefield", MenuAction.START_GAME, {"location": MinefieldLocation}),
+                MenuItem("Back", MenuAction.START_GAME)
+            ]
+        )
+
     def _main_menu_state(self, event: pygame.event.Event) -> None:
         """Handle main menu state"""
         selected_item = self.main_menu.handle_input(event)
@@ -72,19 +61,15 @@ class StateManager:
             elif selected_item.action == MenuAction.CHANGE_LOCATION:
                 self.current_state = GameState.LOCATION_SELECT
 
-    def run(self) -> None:
-        """Main state machine loop"""
-        clock = pygame.time.Clock()
-        running = True
+    def _location_select_state(self, event: pygame.event.Event) -> None:
+        """Handle location selection state"""
+        selected_item = self.location_menu.handle_input(event)
+        self.location_menu.draw(self.screen)
 
-        while running:
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-
-                # Delegate to current state handler
-                if self.current_state in self.states:
-                    self.states[self.current_state](event)
-
-            pygame.display.flip()
-            clock.tick(60)
+        if selected_item:
+            if selected_item.action == MenuAction.START_GAME:
+                if selected_item.metadata and "location" in selected_item.metadata:
+                    self.context.current_location = selected_item.metadata["location"]
+                    self.current_state = GameState.PLAYING
+                else:
+                    self.current_state = GameState.MAIN_MENU

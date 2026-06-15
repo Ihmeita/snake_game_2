@@ -4,10 +4,11 @@ from typing import Tuple, List
 import random
 
 class Snake:
-    def __init__(self, width: int = 800, height: int = 600, block_size: int = 20):
+    def __init__(self, width: int = 800, height: int = 600, block_size: int = 20, game_engine=None):
         self.width = width
         self.height = height
         self.block_size = block_size
+        self.game_engine = game_engine  # Store reference to game engine
         self.reset()
         self._load_sounds()
 
@@ -75,22 +76,58 @@ class Snake:
             self.next_direction = direction
 
     def check_collisions(self):
-        """Check for self-collisions"""
-        head = [self.x, self.y]
-        if head in self.body[:-1]:
+        """Check for self-collisions and mine collisions"""
+        head_rect = pygame.Rect(self.x, self.y, self.block_size, self.block_size)
+        
+        # Self collision
+        head_pos = [self.x, self.y]
+        if head_pos in self.body[:-1]:
             self.alive = False
             if self.death_sound:
                 self.death_sound.play()
+                
+        # Mine collision
+        if hasattr(self, 'mine_effect') and self.mine_effect and hasattr(self, 'current_location'):
+            for obstacle in self.current_location.obstacles:
+                if head_rect.colliderect(obstacle):
+                    # Trigger explosion at snake head position
+                    if pygame:
+                        explosion_x = self.x + self.block_size // 2
+                        explosion_y = self.y + self.block_size // 2
+                        self.game_engine.particle_system.add_explosion(explosion_x, explosion_y)
+                    self.alive = False
+                    if self.death_sound:
+                        self.death_sound.play()
+                
+        # Check for mine collisions
+        if hasattr(self, 'mine_effect') and self.mine_effect:
+            head_rect = pygame.Rect(self.x, self.y, self.block_size, self.block_size)
+            for obstacle in self.current_location.obstacles:
+                if head_rect.colliderect(obstacle):
+                    self.create_particles()
+                    self.alive = False
+                    if self.death_sound:
+                        self.death_sound.play()
+                    
+    def create_particles(self):
+        """Create explosion particles when hitting a mine"""
+        # This would be implemented in the game loop to animate particles
+        # Placeholder implementation
+        print("BOOM! Particle explosion!")
 
     def eat_food(self, food):
-        """Handle food consumption"""
-        if self.x == food.x and self.y == food.y:
+        """Handle food consumption with collision detection"""
+        # Use food's logical size (38px) for collision detection
+        snake_rect = pygame.Rect(self.x, self.y, self.block_size, self.block_size)
+        food_rect = pygame.Rect(food.x, food.y, food.block_size, food.block_size)
+        
+        if snake_rect.colliderect(food_rect):
             if food.is_special:
                 self.length += 3
-                self.outline_color = (255, 192, 203)  # Pink outline (matches special food)
+                self.outline_color = (255, 192, 203)  # Pink outline
             else:
                 self.length += 1
-                self.outline_color = (0, 255, 0)  # Green outline (matches normal food)
+                self.outline_color = (0, 255, 0)  # Green outline
             
             self.score = self.length - 1
             if self.eat_sound:

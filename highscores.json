@@ -1,6 +1,7 @@
 {
     "normal": 0,
     "forest": 14,
-    "desert": 48,
-    "city": 24
+    "desert": 50,
+    "city": 49,
+    "minefield": 116
 }

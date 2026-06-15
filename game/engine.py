@@ -7,6 +7,7 @@ import pygame
 from pathlib import Path
 from game.location import Location
 from game.snake import Snake
+from game.particles import ParticleSystem
 
 class GameEngine:
     """Main game engine class."""
@@ -23,6 +24,7 @@ class GameEngine:
         self.current_location: Optional[Location] = None
         self.snake: Optional[Snake] = None
         self.assets: Dict[str, Any] = {'sounds': {}, 'images': {}}
+        self.particle_system = ParticleSystem()
 
         self._load_assets()
 
@@ -30,6 +32,11 @@ class GameEngine:
         """Load game assets with error handling."""
         try:
             assets_path = Path(__file__).parent / 'assets'
+            
+            # Create assets directory if it doesn't exist
+            assets_path.mkdir(exist_ok=True)
+            (assets_path / 'images').mkdir(exist_ok=True)
+            (assets_path / 'sounds').mkdir(exist_ok=True)
 
             # Load sounds
             sound_files = {
@@ -42,6 +49,11 @@ class GameEngine:
                 full_path = assets_path / 'sounds' / filename
                 if full_path.exists():
                     self.assets['sounds'][name] = pygame.mixer.Sound(full_path)
+                    
+            # Load images (add any existing images to assets dict)
+            # You'll need to add your food images here as well
+            self.assets_path = str(assets_path)
+            
         except Exception as e:
             print(f"Error loading assets: {e}")
 
@@ -53,7 +65,7 @@ class GameEngine:
         )
 
         if not self.snake:
-            self.snake = Snake()
+            self.snake = Snake(game_engine=self)  # Pass engine reference
         self.current_location.apply_effects(self.snake)
 
     def run(self) -> None:
@@ -98,11 +110,21 @@ class GameEngine:
             return
 
         self.snake.move()
-
-        # Add your collision detection here
-        # Example:
-        # if self.check_collision():
-        #     self.game_over()
+        self.snake.current_location = self.current_location  # Provide location reference to snake
+        self.snake.check_collisions()
+        
+        # Update particles
+        self.particle_system.update()
+        
+        # Check for obstacle collisions
+        if self.current_location and self.current_location.obstacles:
+            head_rect = pygame.Rect(self.snake.x, self.snake.y, 
+                                  self.snake.block_size, self.snake.block_size)
+            for obstacle in self.current_location.obstacles:
+                if head_rect.colliderect(obstacle):
+                    self.snake.alive = False
+                    if self.death_sound:
+                        self.death_sound.play()
 
     def _render(self) -> None:
         """Render game frame."""
@@ -116,5 +138,8 @@ class GameEngine:
         # Draw snake
         if self.snake and self.current_location:
             self.snake.draw(self.screen, self.current_location.rules.snake_color)
+            
+        # Draw particles
+        self.particle_system.draw(self.screen)
 
         pygame.display.flip()
