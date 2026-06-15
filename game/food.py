@@ -37,12 +37,11 @@ class Food:
             self.special_img = None
 
     def spawn_food(self):
-        """Spawn food at random position"""
+        """Spawn food at random position with 20% chance for special food"""
         self.x = round(random.randrange(0, self.width - self.block_size) / self.block_size) * self.block_size
         self.y = round(random.randrange(0, self.height - self.block_size) / self.block_size) * self.block_size
-        
-        # 10% chance for special food
-        self.is_special = random.random() < 0.1
+
+        self.is_special = random.random() < 0.15
         self.spawn_time = pygame.time.get_ticks()
 
     def draw(self, screen: pygame.Surface):

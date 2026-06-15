@@ -51,7 +51,10 @@ class GameEngine:
                     self.assets['sounds'][name] = pygame.mixer.Sound(full_path)
                     
             # Load images (add any existing images to assets dict)
+<<<<<<< HEAD
             # You'll need to add your food images here as well
+=======
+>>>>>>> 89e5f5f37a3dbdf0b2092da799255f46340ed876
             self.assets_path = str(assets_path)
             
         except Exception as e:
