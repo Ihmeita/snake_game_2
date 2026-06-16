@@ -60,6 +60,7 @@ class Game:
             nonlocal current_music
             if current_music != "menu":
                 try:
+                    pygame.mixer.music.stop()
                     music_path = Path(self.assets_path) / 'sounds' / 'menu_music.mp3'
                     if music_path.exists():
                         pygame.mixer.music.load(str(music_path))
@@ -73,6 +74,7 @@ class Game:
         def play_location_music(location_name):
             nonlocal current_music
             try:
+                pygame.mixer.music.stop()
                 music_path = Path(self.assets_path) / 'sounds' / f"{location_name}.mp3"
                 if not music_path.exists():
                     # Fallback if no specific music exists for location
@@ -128,6 +130,8 @@ class Game:
                             current_mode = location_names[selected_option]
                             game_over = False
                             paused = False
+                            snake.current_location = location  # Set current location reference
+                            snake.mine_effect = (current_mode == "minefield")  # Enable mine effects for minefield
                             # Play location-specific music
                             play_location_music(current_mode)
                     else:
@@ -136,6 +140,8 @@ class Game:
                             high_score.save_score(current_mode, snake.score)
                             snake.reset()
                             food.spawn_food()
+                            if hasattr(snake, 'current_location') and hasattr(snake.current_location, 'generate_mines'):
+                                snake.current_location.generate_mines()
                             game_over = False
                         elif event.key == pygame.K_ESCAPE:
                             # Return to menu

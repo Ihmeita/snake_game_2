@@ -24,6 +24,7 @@ class Snake:
         self.score = 0
         self.outline_color = (0, 255, 0)
         self.alive = True
+        self.mine_effect = hasattr(self, 'current_location') and hasattr(self.current_location, 'rules') and hasattr(self.current_location.rules, 'special_effect') and "mine" in str(self.current_location.rules.special_effect).lower()
 
     def _load_sounds(self):
         """Load sound effects"""
@@ -98,16 +99,7 @@ class Snake:
                     self.alive = False
                     if self.death_sound:
                         self.death_sound.play()
-                
-        # Check for mine collisions
-        if hasattr(self, 'mine_effect') and self.mine_effect:
-            head_rect = pygame.Rect(self.x, self.y, self.block_size, self.block_size)
-            for obstacle in self.current_location.obstacles:
-                if head_rect.colliderect(obstacle):
-                    self.create_particles()
-                    self.alive = False
-                    if self.death_sound:
-                        self.death_sound.play()
+                    break
                     
     def create_particles(self):
         """Create explosion particles when hitting a mine"""

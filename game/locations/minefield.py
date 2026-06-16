@@ -1,6 +1,7 @@
 from game.location import Location, LocationRules
 import pygame
 import random
+import os
 
 class MinefieldLocation(Location):
     def __init__(self, width=800, height=600, block_size=40):
@@ -11,17 +12,22 @@ class MinefieldLocation(Location):
             snake_color=(255, 0, 0),  # Red color
             special_effect="mine_explosion"
         )
+        sound_path = os.path.join(os.path.dirname(__file__), "../../assets/sounds/minefield.mp3")
+        self.mine_sound = pygame.mixer.Sound(sound_path)
         #self.background = pygame.Surface((width, height))
         #self.background.fill((0, 0, 0))  # Black background
         self.generate_mines()
         
     def generate_mines(self):
-        """Create invisible mines"""
-        # Place 2 mines at specific locations
-        self.obstacles = [
-            pygame.Rect(self.width*0.33, self.height*0.5, self.block_size, self.block_size),
-            pygame.Rect(self.width*0.66, self.height*0.5, self.block_size, self.block_size)
-        ]
+        """Create invisible mines at random positions"""
+        # Clear existing mines
+        self.obstacles = []
+        
+        # Generate random positions for mines
+        for _ in range(2):  # Creates 2 mines
+            mine_x = random.randint(1, (self.width // self.block_size) - 2) * self.block_size
+            mine_y = random.randint(1, (self.height // self.block_size) - 2) * self.block_size
+            self.obstacles.append(pygame.Rect(mine_x, mine_y, self.block_size, self.block_size))
         
     def draw(self, screen):
         """Draw minefield background"""
@@ -36,3 +42,4 @@ class MinefieldLocation(Location):
         snake.color = self.rules.snake_color
         if self.rules.special_effect == "mine_explosion":
             snake.mine_effect = True
+            self.mine_sound.play()
