@@ -10,10 +10,8 @@ class Particle:
         self.y = y
         self.size = random.randint(2, 5)
         self.color = (
-            random.randint(200, 255),
-            random.randint(100, 150),
-            random.randint(0, 50)
-        )  # Orange/red colors
+            255, 105, 180  # Bright pink
+        )  # Flower bush explosion color
         angle = random.uniform(0, math.pi * 2)
         speed = random.uniform(0.5, 3)
         self.vx = math.cos(angle) * speed

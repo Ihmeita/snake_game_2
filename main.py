@@ -2,7 +2,7 @@ import pygame
 from pathlib import Path
 from game.snake import Snake
 from game.food import Food
-from game.locations import ForestLocation, DesertLocation, CityLocation, MinefieldLocation
+from game.locations import ForestLocation, DesertLocation, CityLocation, FlowerfieldLocation
 from game.highscore import HighScore
 from game.particles import ParticleSystem
 
@@ -34,7 +34,7 @@ class Game:
             ("Forest", 250),
             ("Desert", 300),
             ("City", 350),
-            ("Minefield", 400)
+            ("Flowerfield", 400)
         ]
         
         for i, (text, y) in enumerate(options):
@@ -61,7 +61,7 @@ class Game:
             if current_music != "menu":
                 try:
                     pygame.mixer.music.stop()
-                    music_path = Path(self.assets_path) / 'sounds' / 'menu_music.mp3'
+                    music_path = Path(__file__).parent / "game" / "assets" / "sounds" / "menu_music.mp3"
                     if music_path.exists():
                         pygame.mixer.music.load(str(music_path))
                         pygame.mixer.music.set_volume(0.3)
@@ -75,13 +75,13 @@ class Game:
             nonlocal current_music
             try:
                 pygame.mixer.music.stop()
-                music_path = Path(self.assets_path) / 'sounds' / f"{location_name}.mp3"
+                music_path = Path(__file__).parent / "game" / "assets" / "sounds" / f"{location_name}.mp3"
                 if not music_path.exists():
                     # Fallback if no specific music exists for location
                     music_path = Path(self.assets_path) / 'sounds' / 'game_music.mp3'
                 if music_path.exists() and current_music != location_name:
                     pygame.mixer.music.load(str(music_path))
-                    pygame.mixer.music.set_volume(0.20)
+                    pygame.mixer.music.set_volume(0.20)  # Reset to original volume
                     pygame.mixer.music.play(-1)
                     current_music = location_name
             except Exception as e:
@@ -90,20 +90,20 @@ class Game:
         # Start with menu music
         play_menu_music()
         
-        snake = Snake(width=800, height=600, block_size=20, game_engine=self)
-        food = Food(width=800, height=600, assets_path=self.assets_path, block_size=38)
+        snake = Snake(width=800, height=600, block_size=14, game_engine=self)  # 30% smaller (20 * 0.7 ≈ 14)
+        food = Food(width=800, height=600, assets_path=self.assets_path, block_size=27)  # 30% smaller (38 * 0.7 ≈ 27)
         high_score = HighScore()
         
         # Menu variables
         in_menu = True
         selected_option = 0
-        location_names = ["forest", "desert", "city", "minefield"]
+        location_names = ["forest", "desert", "city", "flowerfield"]
         current_mode = location_names[selected_option]
         locations = [
             ForestLocation(width=800, height=600, block_size=40),
             DesertLocation(width=800, height=600, block_size=40),
             CityLocation(width=800, height=600, block_size=40),
-            MinefieldLocation(width=800, height=600, block_size=40)
+            FlowerfieldLocation(width=800, height=600, block_size=40)
         ]
         
         # Fonts
@@ -131,7 +131,7 @@ class Game:
                             game_over = False
                             paused = False
                             snake.current_location = location  # Set current location reference
-                            snake.mine_effect = (current_mode == "minefield")  # Enable mine effects for minefield
+                            snake.flower_effect = (current_mode == "flowerfield")  # Enable flower effects for flowerfield
                             # Play location-specific music
                             play_location_music(current_mode)
                     else:
@@ -140,8 +140,8 @@ class Game:
                             high_score.save_score(current_mode, snake.score)
                             snake.reset()
                             food.spawn_food()
-                            if hasattr(snake, 'current_location') and hasattr(snake.current_location, 'generate_mines'):
-                                snake.current_location.generate_mines()
+                            if hasattr(snake, 'current_location') and hasattr(snake.current_location, 'generate_flowers'):
+                                snake.current_location.generate_flowers()
                             game_over = False
                         elif event.key == pygame.K_ESCAPE:
                             # Return to menu

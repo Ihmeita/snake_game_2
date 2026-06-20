@@ -3,7 +3,7 @@ Game State Management
 Handles transitions between different game states.
 """
 
-from .locations import ForestLocation, DesertLocation, CityLocation, MinefieldLocation
+from .locations import ForestLocation, DesertLocation, CityLocation, FlowerfieldLocation
 
 class StateManager:
     """
@@ -45,7 +45,7 @@ class StateManager:
                 MenuItem("Forest", MenuAction.START_GAME, {"location": ForestLocation}),
                 MenuItem("Desert", MenuAction.START_GAME, {"location": DesertLocation}),
                 MenuItem("City", MenuAction.START_GAME, {"location": CityLocation}),
-                MenuItem("Minefield", MenuAction.START_GAME, {"location": MinefieldLocation}),
+                MenuItem("Flowerfield", MenuAction.START_GAME, {"location": FlowerfieldLocation}),
                 MenuItem("Back", MenuAction.START_GAME)
             ]
         )

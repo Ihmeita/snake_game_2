@@ -3,5 +3,6 @@
     "forest": 14,
     "desert": 50,
     "city": 49,
-    "minefield": 116
+    "minefield": 116,
+    "flowerfield": 30
 }

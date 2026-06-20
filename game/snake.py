@@ -24,23 +24,34 @@ class Snake:
         self.score = 0
         self.outline_color = (0, 255, 0)
         self.alive = True
-        self.mine_effect = hasattr(self, 'current_location') and hasattr(self.current_location, 'rules') and hasattr(self.current_location.rules, 'special_effect') and "mine" in str(self.current_location.rules.special_effect).lower()
+        self.flower_effect = hasattr(self, 'current_location') and hasattr(self.current_location, 'rules') and hasattr(self.current_location.rules, 'special_effect') and "flower" in str(self.current_location.rules.special_effect).lower()
 
     def _load_sounds(self):
         """Load sound effects"""
+        sound_dir = Path(__file__).parent / "assets" / "sounds"
+        
+        # Initialize with None (will be safe to call play() on None)
+        self.eat_sound = None
+        self.death_sound = None
+        self.flower_sound = None
+        
         try:
-            self.eat_sound = pygame.mixer.Sound("assets/sounds/eat.wav")
-            self.death_sound = pygame.mixer.Sound("assets/sounds/death.wav")
-            self.eat_sound.set_volume(0.65)  # Set to 65% volume
-            self.death_sound.set_volume(0.65)  # Set to 65% volume
+            eat_path = sound_dir / "eat.wav"
+            if eat_path.exists():
+                self.eat_sound = pygame.mixer.Sound(str(eat_path))
+                self.eat_sound.set_volume(0.65)
+            
+            death_path = sound_dir / "death.wav"
+            if death_path.exists():
+                self.death_sound = pygame.mixer.Sound(str(death_path))
+                self.death_sound.set_volume(0.65)
+                
+            flower_path = sound_dir / "flowerbush.wav"
+            if flower_path.exists():
+                self.flower_sound = pygame.mixer.Sound(str(flower_path))
+                self.flower_sound.set_volume(0.65)
         except Exception as e:
             print(f"Could not load sounds: {e}")
-            # Create silent sounds as fallback
-            silent_wav = bytearray([82,73,70,70,24,0,0,0,87,65,86,69,102,109,116,32,16,0,0,0,1,0,1,0,68,172,0,0,136,88,1,0,2,0,16,0,100,97,116,97,0,0,0,0])
-            self.eat_sound = pygame.mixer.Sound(buffer=silent_wav)
-            self.death_sound = pygame.mixer.Sound(buffer=silent_wav)
-            self.eat_sound.set_volume(0.65)
-            self.death_sound.set_volume(0.65)
 
     def move(self):
         """Update snake position"""
@@ -77,7 +88,7 @@ class Snake:
             self.next_direction = direction
 
     def check_collisions(self):
-        """Check for self-collisions and mine collisions"""
+        """Check for self-collisions and flower bush collisions"""
         head_rect = pygame.Rect(self.x, self.y, self.block_size, self.block_size)
         
         # Self collision
@@ -87,22 +98,25 @@ class Snake:
             if self.death_sound:
                 self.death_sound.play()
                 
-        # Mine collision
-        if hasattr(self, 'mine_effect') and self.mine_effect and hasattr(self, 'current_location'):
+        # Flower bush collision
+        if hasattr(self, 'flower_effect') and self.flower_effect and hasattr(self, 'current_location'):
             for obstacle in self.current_location.obstacles:
                 if head_rect.colliderect(obstacle):
-                    # Trigger explosion at snake head position
+                    # Trigger effects
                     if pygame:
                         explosion_x = self.x + self.block_size // 2
                         explosion_y = self.y + self.block_size // 2
                         self.game_engine.particle_system.add_explosion(explosion_x, explosion_y)
-                    self.alive = False
-                    if self.death_sound:
-                        self.death_sound.play()
+                    
+                    # Play flower sound (if available)
+                    if hasattr(self, 'flower_sound') and self.flower_sound:
+                        self.flower_sound.play()
+                    
+                    # Only play death sound for self-collision, not flower bush
                     break
                     
     def create_particles(self):
-        """Create explosion particles when hitting a mine"""
+        """Create explosion particles when hitting a flower bush"""
         # This would be implemented in the game loop to animate particles
         # Placeholder implementation
         print("BOOM! Particle explosion!")
