@@ -46,3 +46,4 @@ class FlowerfieldLocation(Location):
         if self.rules.special_effect == "flower_explosion":
             snake.flower_effect = True
             self.flower_sound.play()
+            self.generate_flowers()  # Regenerate flowers after interaction
