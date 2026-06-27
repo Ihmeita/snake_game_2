@@ -115,6 +115,7 @@ class Snake:
                     # Only play death sound for self-collision, not flower bush
                     if hasattr(self.current_location, 'generate_flowers'):
                         self.current_location.generate_flowers()  # Regenerate bushes
+                        self.outline_color = (200, 162, 200)  # Light purple outline
                     break
                     
     def create_particles(self):
