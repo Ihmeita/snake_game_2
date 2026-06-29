@@ -2,7 +2,7 @@ import pygame
 from pathlib import Path
 from game.snake import Snake
 from game.food import Food
-from game.locations import ForestLocation, DesertLocation, CityLocation, FlowerfieldLocation
+from game.locations import ForestLocation, DesertLocation, CityLocation, FlowerfieldLocation, Location1
 from game.highscore import HighScore
 from game.particles import ParticleSystem
 
@@ -29,27 +29,38 @@ class Game:
         title = font_large.render("SNAKE GAME", True, (255, 255, 255))
         self.screen.blit(title, (self.screen.get_width()//2 - title.get_width()//2, 100))
         
-        # Draw menu options
-        options = [
-            ("Forest", 250),
-            ("Desert", 300),
-            ("City", 350),
-            ("Flowerfield", 400)
-        ]
+        # Draw menu options in two columns with better spacing
+        options = ["Forest", "Desert", "City", "Flowerfield", "Location 1"]
+        column_width = self.screen.get_width() // 2
+        y_start = 200  # Starting y-position for the first item
+        item_spacing = 40  # Vertical spacing between items
         
-        for i, (text, y) in enumerate(options):
+        for i, text in enumerate(options):
             color = (0, 255, 0) if i == selected_option else (255, 255, 255)
             option = font_small.render(text, True, color)
-            self.screen.blit(option, (self.screen.get_width()//2 - option.get_width()//2, y))
+            
+            # Left column (first 3 items)
+            if i < len(options) // 2 + len(options) % 2:
+                x = column_width // 2 - option.get_width() // 2
+                y = y_start + i * item_spacing
+            # Right column (remaining items)
+            else:
+                x = column_width + column_width // 2 - option.get_width() // 2
+                y = y_start + (i - len(options) // 2 - len(options) % 2) * item_spacing
+            
+            self.screen.blit(option, (x, y))
         
-        # Draw instructions
-        instructions = font_small.render(
+        # Draw instructions at the bottom with smaller font
+        font_tiny = pygame.font.SysFont("Arial", 20)
+        instructions = font_tiny.render(
             "Use UP/DOWN to select, ENTER to start", 
             True, 
             (200, 200, 200)
         )
-        self.screen.blit(instructions, 
-                        (self.screen.get_width()//2 - instructions.get_width()//2, 450))
+        self.screen.blit(instructions, (
+            self.screen.get_width()//2 - instructions.get_width()//2,
+            self.screen.get_height() - 50  # Fixed position near the bottom
+        ))
 
     def run(self):
         # Music state
@@ -97,13 +108,14 @@ class Game:
         # Menu variables
         in_menu = True
         selected_option = 0
-        location_names = ["forest", "desert", "city", "flowerfield"]
+        location_names = ["forest", "desert", "city", "flowerfield", "location1"]
         current_mode = location_names[selected_option]
         locations = [
             ForestLocation(width=800, height=600, block_size=40),
             DesertLocation(width=800, height=600, block_size=40),
             CityLocation(width=800, height=600, block_size=40),
-            FlowerfieldLocation(width=800, height=600, block_size=40)
+            FlowerfieldLocation(width=800, height=600, block_size=40),
+            Location1(assets_path=self.assets_path, width=800, height=600, block_size=40)
         ]
         
         # Fonts

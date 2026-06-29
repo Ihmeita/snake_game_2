@@ -43,6 +43,14 @@ class MenuSystem:
         self.current_selection = 0
         self.font = pygame.font.SysFont('Arial', 36)
         self.title_font = pygame.font.SysFont('Arial', 48, bold=True)
+        self.location_font = pygame.font.SysFont('Arial', 20)
+        self.locations = [
+            {"name": "Forest", "class": "ForestLocation"},
+            {"name": "Flower Field", "class": "FlowerFieldLocation"},
+            {"name": "Desert", "class": "DesertLocation"},
+            {"name": "City", "class": "CityLocation"},
+            {"name": "1", "class": "Location1"}
+        ]
 
     def handle_input(self, event: pygame.event.Event) -> Optional[MenuItem]:
         """Process user input for menu navigation"""
@@ -62,9 +70,39 @@ class MenuSystem:
         title_rect = title_surf.get_rect(center=(surface.get_width() // 2, 100))
         surface.blit(title_surf, title_rect)
 
-        # Draw menu items
+        # Draw menu items in two columns
+        column_width = surface.get_width() // 2
         for i, item in enumerate(self.items):
             color = item.selected_color if i == self.current_selection else item.color
             item_surf = self.font.render(item.text, True, color)
-            item_rect = item_surf.get_rect(center=(surface.get_width() // 2, 200 + i * 50))
+            
+            # First column (left)
+            if i < len(self.items) // 2 + len(self.items) % 2:
+                item_rect = item_surf.get_rect(
+                    midleft=(column_width // 2, 200 + i * 50)
+                )
+            # Second column (right)
+            else:
+                item_rect = item_surf.get_rect(
+                    midleft=(column_width + column_width // 2, 200 + (i - len(self.items) // 2 - len(self.items) % 2) * 50)
+                )
             surface.blit(item_surf, item_rect)
+
+        # Draw locations list in two columns
+        y_offset = 200 + len(self.items) * 50 + 50  # Space below menu items
+        column_width = surface.get_width() // 2
+        for i, location in enumerate(self.locations):
+            location_name = location["name"]
+            location_surf = self.location_font.render(location_name, True, (200, 200, 200))
+            
+            # First column (left)
+            if i < len(self.locations) // 2 + len(self.locations) % 2:
+                location_rect = location_surf.get_rect(
+                    midleft=(column_width // 2, y_offset + i * 30)
+                )
+            # Second column (right)
+            else:
+                location_rect = location_surf.get_rect(
+                    midleft=(column_width + column_width // 2, y_offset + (i - len(self.locations) // 2 - len(self.locations) % 2) * 30)
+                )
+            surface.blit(location_surf, location_rect)
