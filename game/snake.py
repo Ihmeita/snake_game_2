@@ -88,7 +88,7 @@ class Snake:
             self.next_direction = direction
 
     def check_collisions(self):
-        """Check for self-collisions and flower bush collisions"""
+        """Check for self-collisions and obstacle collisions"""
         head_rect = pygame.Rect(self.x, self.y, self.block_size, self.block_size)
         
         # Self collision
@@ -98,25 +98,12 @@ class Snake:
             if self.death_sound:
                 self.death_sound.play()
                 
-        # Flower bush collision
-        if hasattr(self, 'flower_effect') and self.flower_effect and hasattr(self, 'current_location'):
-            for obstacle in self.current_location.obstacles:
-                if head_rect.colliderect(obstacle):
-                    # Trigger effects
-                    if pygame:
-                        explosion_x = self.x + self.block_size // 2
-                        explosion_y = self.y + self.block_size // 2
-                        self.game_engine.particle_system.add_explosion(explosion_x, explosion_y)
-                    
-                    # Play flower sound (if available)
-                    if hasattr(self, 'flower_sound') and self.flower_sound:
-                        self.flower_sound.play()
-                    
-                    # Only play death sound for self-collision, not flower bush
-                    if hasattr(self.current_location, 'generate_flowers'):
-                        self.current_location.generate_flowers()  # Regenerate bushes
-                        self.outline_color = (200, 162, 200)  # Light purple outline
-                    break
+        # Check for obstacle collisions (only if current_location has obstacles)
+        if hasattr(self, 'current_location') and hasattr(self.current_location, 'check_collisions'):
+            if self.current_location.check_collisions(self):
+                self.alive = False
+                if self.death_sound:
+                    self.death_sound.play()
                     
     def create_particles(self):
         """Create explosion particles when hitting a flower bush"""
@@ -132,13 +119,13 @@ class Snake:
         
         if snake_rect.colliderect(food_rect):
             if food.is_special:
-                self.length += 3
-                self.outline_color = (255, 192, 203)  # Pink outline
+                self.score += 3  # Bonus points only
+                self.length += 1  # Normal growth
+                self.outline_color = (255, 192, 203)
             else:
+                self.score += 1
                 self.length += 1
-                self.outline_color = (0, 255, 0)  # Green outline
-            
-            self.score = self.length - 1
+                self.outline_color = (0, 255, 0)
             if self.eat_sound:
                 self.eat_sound.play()
             return True
