@@ -60,16 +60,22 @@ class GameEngine:
         except Exception as e:
             print(f"Error loading assets: {e}")
 
-    def set_location(self, location_class: Type[Location]) -> None:
-        """Set the current game location."""
-        self.current_location = location_class(
-            width=self.screen.get_width(),
-            height=self.screen.get_height()
-        )
-
-        if not self.snake:
-            self.snake = Snake(game_engine=self)  # Pass engine reference
-        self.current_location.apply_effects(self.snake)
+    def restart_game(self):
+        """Completely restart the game with fresh state"""
+        if self.current_location:
+            # Create a NEW instance of the location to ensure complete reset
+            current_location_class = self.current_location.__class__
+            self.current_location = current_location_class(
+                width=self.screen.get_width(),
+                height=self.screen.get_height()
+            )
+            
+        if self.snake:
+            self.snake.reset()
+            
+        # Reapply effects if both exist
+        if self.current_location and self.snake:
+            self.current_location.apply_effects(self.snake)
 
     def run(self) -> None:
         """Run the main game loop."""
@@ -106,6 +112,8 @@ class GameEngine:
             self.snake.change_direction('UP')
         elif event.key == pygame.K_DOWN:
             self.snake.change_direction('DOWN')
+        elif event.key == pygame.K_r:  # Handle R key for restart
+            self.restart_game()
 
     def _update(self) -> None:
         """Update game state."""
