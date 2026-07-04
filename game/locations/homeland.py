@@ -3,18 +3,21 @@ import pygame
 import random
 import os
 
-class Location1(Location):
+class HomelandLocation(Location):
     def __init__(self, assets_path, width=800, height=600, block_size=40):
         super().__init__(width, height, block_size)
         self.rules = LocationRules(
             speed_modifier=0.4,
             food_value=2,
-            snake_color=(128, 0, 128)  # Purple color
+            snake_color=(0, 0, 0)  # Black color
         )
-        self.background = pygame.image.load(os.path.join(assets_path, "BG_images", "1.jpg"))
+        self.background = pygame.image.load(
+            os.path.join(assets_path, "BG_images", "homeland.jpg")
+            )
         self.explosion_particles = []
         self.obstacles = []
         self.initial_obstacles = []
+
         self.generate_obstacles()
         
     def full_reset(self):

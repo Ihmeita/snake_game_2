@@ -12,18 +12,26 @@ class Food:
         self.y = 0
         self.is_special = False
         self.spawn_time = 0
+        self._assets_path = assets_path
         
         # Load images
         self._load_images(assets_path)
         self.spawn_food()
         
-    def _load_images(self, assets_path):
+    def _load_images(self, assets_path, prefix="food"):
         """Load food images with visual scaling"""
         try:
             if assets_path:
-                # Load images
-                self.normal_img = pygame.image.load(Path(__file__).parent / "assets" / "images" / "food.png")
-                self.special_img = pygame.image.load(Path(__file__).parent / "assets" / "images" / "special_food.png")
+                normal_path = Path(__file__).parent / "assets" / "images" / f"{prefix}.png"
+                special_path = Path(__file__).parent / "assets" / "images" / f"{prefix}_special.png"
+                
+                if not normal_path.exists():
+                    normal_path = Path(__file__).parent / "assets" / "images" / "food.png"
+                if not special_path.exists():
+                    special_path = Path(__file__).parent / "assets" / "images" / "special_food.png"
+                
+                self.normal_img = pygame.image.load(str(normal_path))
+                self.special_img = pygame.image.load(str(special_path))
                 
                 # Scale images to 93% of block_size (visual only)
                 visual_size = int(self.block_size * 0.93)
@@ -35,10 +43,10 @@ class Food:
             # Fallback to pixel style
             self.normal_img = None
             self.special_img = None
-        except Exception:
-            # Fallback to pixel style
-            self.normal_img = None
-            self.special_img = None
+    
+    def set_location_images(self, prefix):
+        """Reload food images for a specific location (e.g. 'homeland_food')"""
+        self._load_images(getattr(self, '_assets_path', None), prefix)
 
     def spawn_food(self):
         """Spawn food at random position with 20% chance for special food"""

@@ -1,8 +1,9 @@
+import math
 import pygame
 from pathlib import Path
 from game.snake import Snake
 from game.food import Food
-from game.locations import ForestLocation, DesertLocation, CityLocation, FlowerfieldLocation, Location1
+from game.locations import ForestLocation, DesertLocation, CityLocation, FlowerfieldLocation, HomelandLocation, CrossroadsLocation, PortalLocation
 from game.highscore import HighScore
 from game.particles import ParticleSystem
 
@@ -30,7 +31,7 @@ class Game:
         self.screen.blit(title, (self.screen.get_width()//2 - title.get_width()//2, 100))
         
         # Draw menu options in two columns with better spacing
-        options = ["Forest", "Desert", "City", "Flowerfield", "Location 1"]
+        options = ["Forest", "Desert", "City", "Flowerfield", "Homeland", "Crossroads"]
         column_width = self.screen.get_width() // 2
         y_start = 200  # Starting y-position for the first item
         item_spacing = 40  # Vertical spacing between items
@@ -108,14 +109,16 @@ class Game:
         # Menu variables
         in_menu = True
         selected_option = 0
-        location_names = ["forest", "desert", "city", "flowerfield", "location1"]
+        location_names = ["forest", "desert", "city", "flowerfield", "homeland", "crossroads"]
         current_mode = location_names[selected_option]
+        portal_pending = 0
         locations = [
             ForestLocation(width=800, height=600, block_size=40),
             DesertLocation(width=800, height=600, block_size=40),
             CityLocation(width=800, height=600, block_size=40),
             FlowerfieldLocation(width=800, height=600, block_size=40),
-            Location1(assets_path=self.assets_path, width=800, height=600, block_size=40)
+            HomelandLocation(assets_path=self.assets_path, width=800, height=600, block_size=40),
+            CrossroadsLocation(width=800, height=600, block_size=40)
         ]
         
         # Fonts
@@ -142,8 +145,11 @@ class Game:
                             current_mode = location_names[selected_option]
                             game_over = False
                             paused = False
+                            portal_pending = 0
                             snake.current_location = location  # Set current location reference
                             snake.flower_effect = (current_mode == "flowerfield")  # Enable flower effects for flowerfield
+                            # Load location-specific food images
+                            food.set_location_images(f"{current_mode}_food")
                             # Play location-specific music
                             play_location_music(current_mode)
                     else:
@@ -159,6 +165,7 @@ class Game:
                             # Return to menu
                             in_menu = True
                             game_over = False
+                            portal_pending = 0
                             # Switch back to menu music
                             play_menu_music()
                         elif event.key == pygame.K_LEFT:
@@ -178,29 +185,89 @@ class Game:
                 
                 # Game logic
                 if not game_over:
+                    # Restore one body segment per frame while emerging from portal
+                    if portal_pending > 0:
+                        portal_pending -= 1
+                        snake.length += 1
+                        snake.score = snake.length - 1
+                    
                     snake.move()
                     snake.check_collisions()
                     
                     if not snake.alive:
                         game_over = True
+                        portal_pending = 0
                         high_score.save_score(current_mode, snake.score)
                     
                     if snake.eat_food(food):
                         food.spawn_food()
+                    
+                    # Portal check for Crossroads
+                    if current_mode == "crossroads" and snake.score >= 22 and not location.portal_active:
+                        location.portal_active = True
+                    
+                    if current_mode == "crossroads" and location.portal_active:
+                        snake_head_rect = pygame.Rect(snake.x, snake.y, snake.block_size, snake.block_size)
+                        if snake_head_rect.colliderect(location.portal_rect):
+                            portal_pending = snake.length - 1
+                            snake.body = [[snake.x, snake.y]]
+                            snake.length = 1
+                            snake.score = 0
+                            location = PortalLocation(width=800, height=600, block_size=40)
+                            current_mode = "portal"
+                            snake.current_location = location
+                            snake.flower_effect = False
+                            play_location_music("portal")
+                    
+                    # Portal back from PortalLocation to Crossroads
+                    if current_mode == "portal":
+                        snake_head_rect = pygame.Rect(snake.x, snake.y, snake.block_size, snake.block_size)
+                        if snake_head_rect.colliderect(location.portal_rect):
+                            portal_pending = snake.length - 1
+                            snake.body = [[snake.x, snake.y]]
+                            snake.length = 1
+                            snake.score = 0
+                            location = CrossroadsLocation(width=800, height=600, block_size=40)
+                            location.portal_active = True
+                            current_mode = "crossroads"
+                            snake.current_location = location
+                            snake.flower_effect = False
+                            snake.x = location.portal_rect.x - snake.block_size
+                            snake.y = location.portal_rect.y
+                            play_location_music("crossroads")
+                
+                # Iridescent gradient for Homeland
+                if current_mode == "homeland":
+                    t = pygame.time.get_ticks() / 1000
+                    blend = (math.sin(t * 2) + 1) / 2
+                    head_color = (
+                        int(255 * blend),
+                        int(255 * blend),
+                        int(255 * (1 - blend))
+                    )
+                    tail_color = (
+                        int(255 * (1 - blend)),
+                        int(255 * (1 - blend)),
+                        int(255 * blend)
+                    )
                 
                 # Rendering
                 location.draw(self.screen)
                 food.draw(self.screen)
-                snake.draw(self.screen, location.rules.snake_color)
+                if current_mode == "homeland":
+                    snake.draw(self.screen, location.rules.snake_color, head_color, tail_color)
+                else:
+                    snake.draw(self.screen, location.rules.snake_color)
                 
                 # Draw particles
                 self.particle_system.draw(self.screen)
                 
                 # UI Elements
-                score_text = font_small.render(f"Score: {snake.score}", True, (255,255,255))
+                text_color = (0, 0, 0) if current_mode == "portal" else (255, 255, 255)
+                score_text = font_small.render(f"Score: {snake.score}", True, text_color)
                 high_score_text = font_small.render(
                     f"High Score: {high_score.get_high_score(current_mode)}", 
-                    True, (255,255,255)
+                    True, text_color
                 )
                 self.screen.blit(score_text, (10, 10))
                 self.screen.blit(high_score_text, (10, 50))

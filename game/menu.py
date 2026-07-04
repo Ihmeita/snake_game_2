@@ -49,7 +49,8 @@ class MenuSystem:
             {"name": "Flower Field", "class": "FlowerFieldLocation"},
             {"name": "Desert", "class": "DesertLocation"},
             {"name": "City", "class": "CityLocation"},
-            {"name": "1", "class": "Location1"}
+            {"name": "Homeland", "class": "HomelandLocation"},
+            {"name": "Crossroads", "class": "CrossroadsLocation"}
         ]
 
     def handle_input(self, event: pygame.event.Event) -> Optional[MenuItem]:
