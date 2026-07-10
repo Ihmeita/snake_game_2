@@ -137,14 +137,12 @@ class Snake:
         for i, segment in enumerate(self.body):
             if gradient_from and gradient_to:
                 t = i / max(total - 1, 1)
-                seg_color = (
+                outline = (
                     int(gradient_from[0] + (gradient_to[0] - gradient_from[0]) * t),
                     int(gradient_from[1] + (gradient_to[1] - gradient_from[1]) * t),
                     int(gradient_from[2] + (gradient_to[2] - gradient_from[2]) * t)
                 )
-                outline = seg_color
             else:
-                seg_color = snake_color
                 outline = self.outline_color
             
             pygame.draw.rect(
@@ -155,7 +153,7 @@ class Snake:
             )
             pygame.draw.rect(
                 screen, 
-                seg_color,
+                snake_color,
                 [segment[0], segment[1], self.block_size, self.block_size]
             )
         
