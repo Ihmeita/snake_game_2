@@ -56,8 +56,10 @@ class Food:
         self.is_special = random.random() < 0.15
         self.spawn_time = pygame.time.get_ticks()
 
-    def draw(self, screen: pygame.Surface):
+    def draw(self, screen: pygame.Surface, visible=True):
         """Draw food on screen"""
+        if not visible:
+            return
         if self.normal_img and self.special_img:
             img = self.special_img if self.is_special else self.normal_img
             # Calculate centered position for scaled image

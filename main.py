@@ -67,6 +67,9 @@ class Game:
         # Music state
         current_music = None
         
+        # Initialize pygame time clock for flickering
+        pygame.time.set_timer(pygame.USEREVENT, 100)  # Trigger USEREVENT every 100ms
+        
         # Load menu music
         def play_menu_music():
             nonlocal current_music
@@ -106,8 +109,9 @@ class Game:
         food = Food(width=800, height=600, assets_path=self.assets_path, block_size=27)  # 30% smaller (38 * 0.7 ≈ 27)
         high_score = HighScore()
         
-        # Menu variables
+        # Initialize game state
         in_menu = True
+        game_over = False
         selected_option = 0
         location_names = ["forest", "desert", "city", "flowerfield", "homeland", "crossroads"]
         current_mode = location_names[selected_option]
@@ -177,64 +181,62 @@ class Game:
                         elif event.key == pygame.K_DOWN:
                             snake.change_direction("DOWN")
             
-            if in_menu:
-                self._draw_menu(font_large, font_small, selected_option)
-            else:
-                # Update particles
-                self.particle_system.update()
-                
-                # Game logic
-                if not game_over:
-                    # Restore one body segment per frame while emerging from portal
-                    if portal_pending > 0:
-                        portal_pending -= 1
-                        snake.length += 1
-                        snake.score = snake.length - 1
+                if not in_menu:
+                    # Update particles
+                    self.particle_system.update()
                     
-                    snake.move()
-                    snake.check_collisions()
-                    
-                    if not snake.alive:
-                        game_over = True
-                        portal_pending = 0
-                        high_score.save_score(current_mode, snake.score)
-                    
-                    if snake.eat_food(food):
-                        food.spawn_food()
-                    
-                    # Portal check for Crossroads
-                    if current_mode == "crossroads" and snake.score >= 22 and not location.portal_active:
-                        location.portal_active = True
-                    
-                    if current_mode == "crossroads" and location.portal_active:
-                        snake_head_rect = pygame.Rect(snake.x, snake.y, snake.block_size, snake.block_size)
-                        if snake_head_rect.colliderect(location.portal_rect):
-                            portal_pending = snake.length - 1
-                            snake.body = [[snake.x, snake.y]]
-                            snake.length = 1
-                            snake.score = 0
-                            location = PortalLocation(width=800, height=600, block_size=40)
-                            current_mode = "portal"
-                            snake.current_location = location
-                            snake.flower_effect = False
-                            play_location_music("portal")
-                    
-                    # Portal back from PortalLocation to Crossroads
-                    if current_mode == "portal":
-                        snake_head_rect = pygame.Rect(snake.x, snake.y, snake.block_size, snake.block_size)
-                        if snake_head_rect.colliderect(location.portal_rect):
-                            portal_pending = snake.length - 1
-                            snake.body = [[snake.x, snake.y]]
-                            snake.length = 1
-                            snake.score = 0
-                            location = CrossroadsLocation(width=800, height=600, block_size=40)
+                    # Game logic
+                    if not game_over:
+                        # Restore one body segment per frame while emerging from portal
+                        if portal_pending > 0:
+                            portal_pending -= 1
+                            snake.length += 1
+                            snake.score = snake.length - 1
+                        
+                        snake.move()
+                        snake.check_collisions()
+                        
+                        if not snake.alive:
+                            game_over = True
+                            portal_pending = 0
+                            high_score.save_score(current_mode, snake.score)
+                        
+                        if snake.eat_food(food):
+                            food.spawn_food()
+                        
+                        # Portal check for Crossroads
+                        if current_mode == "crossroads" and snake.score >= 22 and not location.portal_active:
                             location.portal_active = True
-                            current_mode = "crossroads"
-                            snake.current_location = location
-                            snake.flower_effect = False
-                            snake.x = location.portal_rect.x - snake.block_size
-                            snake.y = location.portal_rect.y
-                            play_location_music("crossroads")
+                        
+                        if current_mode == "crossroads" and location.portal_active:
+                            snake_head_rect = pygame.Rect(snake.x, snake.y, snake.block_size, snake.block_size)
+                            if snake_head_rect.colliderect(location.portal_rect):
+                                portal_pending = snake.length - 1
+                                snake.body = [[snake.x, snake.y]]
+                                snake.length = 1
+                                snake.score = 0
+                                location = PortalLocation(width=800, height=600, block_size=40)
+                                current_mode = "portal"
+                                snake.current_location = location
+                                snake.flower_effect = False
+                                play_location_music("portal")
+                        
+                        # Portal back from PortalLocation to Crossroads
+                        if current_mode == "portal":
+                            snake_head_rect = pygame.Rect(snake.x, snake.y, snake.block_size, snake.block_size)
+                            if snake_head_rect.colliderect(location.portal_rect):
+                                portal_pending = snake.length - 1
+                                snake.body = [[snake.x, snake.y]]
+                                snake.length = 1
+                                snake.score = 0
+                                location = CrossroadsLocation(width=800, height=600, block_size=40)
+                                location.portal_active = True
+                                current_mode = "crossroads"
+                                snake.current_location = location
+                                snake.flower_effect = False
+                                snake.x = location.portal_rect.x - snake.block_size
+                                snake.y = location.portal_rect.y
+                                play_location_music("crossroads")
                 
                 # Iridescent gradient for Homeland
                 if current_mode == "homeland":
@@ -251,9 +253,17 @@ class Game:
                         int(255 * blend)
                     )
                 
-                # Rendering
+            # Update location (for flickering)
+            if not in_menu:
+                location.update(dt=0.1)
+            
+            # Rendering
+            if in_menu:
+                self._draw_menu(font_large, font_small, selected_option)
+            else:
                 location.draw(self.screen)
-                food.draw(self.screen)
+                dark = (current_mode == "crossroads") and not getattr(location, "light_on", True)
+                food.draw(self.screen, visible=not dark)
                 if current_mode == "homeland":
                     snake.draw(self.screen, location.rules.snake_color, head_color, tail_color)
                 else:
@@ -262,57 +272,57 @@ class Game:
                 # Draw particles
                 self.particle_system.draw(self.screen)
                 
-                # UI Elements
-                text_color = (0, 0, 0) if current_mode == "portal" else (255, 255, 255)
-                score_text = font_small.render(f"Score: {snake.score}", True, text_color)
-                high_score_text = font_small.render(
-                    f"High Score: {high_score.get_high_score(current_mode)}", 
-                    True, text_color
-                )
-                self.screen.blit(score_text, (10, 10))
-                self.screen.blit(high_score_text, (10, 50))
+            # UI Elements
+            text_color = (0, 0, 0) if current_mode == "portal" else (255, 255, 255)
+            score_text = font_small.render(f"Score: {snake.score}", True, text_color)
+            high_score_text = font_small.render(
+                f"High Score: {high_score.get_high_score(current_mode)}", 
+                True, text_color
+            )
+            self.screen.blit(score_text, (10, 10))
+            self.screen.blit(high_score_text, (10, 50))
                 
-                if game_over:
-                    font_title = pygame.font.SysFont("Arial", 72)
-                    font_instruction = pygame.font.SysFont("Arial", 42)
+            if game_over:
+                font_title = pygame.font.SysFont("Arial", 72)
+                font_instruction = pygame.font.SysFont("Arial", 42)
+                
+                # Function to create outlined text
+                def render_outlined_text(font, text, text_color, outline_color):
+                    # Outline effect - render text 8 times (1px offset in each direction)
+                    outline_surfaces = [
+                        font.render(text, True, outline_color),
+                        font.render(text, True, outline_color),
+                        font.render(text, True, outline_color),
+                        font.render(text, True, outline_color),
+                        font.render(text, True, outline_color),
+                        font.render(text, True, outline_color),
+                        font.render(text, True, outline_color),
+                        font.render(text, True, outline_color)
+                    ]
+                    text_surface = font.render(text, True, text_color)
                     
-                    # Function to create outlined text
-                    def render_outlined_text(font, text, text_color, outline_color):
-                        # Outline effect - render text 8 times (1px offset in each direction)
-                        outline_surfaces = [
-                            font.render(text, True, outline_color),
-                            font.render(text, True, outline_color),
-                            font.render(text, True, outline_color),
-                            font.render(text, True, outline_color),
-                            font.render(text, True, outline_color),
-                            font.render(text, True, outline_color),
-                            font.render(text, True, outline_color),
-                            font.render(text, True, outline_color)
-                        ]
-                        text_surface = font.render(text, True, text_color)
-                        
-                        return outline_surfaces, text_surface
+                    return outline_surfaces, text_surface
+                
+                # Create text surfaces with outline and main color
+                game_over_outlines, game_over_text = render_outlined_text(font_title, "GAME OVER", (255, 69, 0), (0, 0, 0))
+                restart_outlines, restart_text = render_outlined_text(font_instruction, "Press R to restart", (255, 255, 255), (0, 0, 0))
+                menu_outlines, menu_text = render_outlined_text(font_instruction, "Press ESC to return to menu", (200, 200, 200), (0, 0, 0))
+                
+                # Draw outlines
+                def draw_text_with_outlines(screen, outlines, text_surface, x, y):
+                    center_x = x - text_surface.get_width()//2
+                    center_y = y
                     
-                    # Create text surfaces with outline and main color
-                    game_over_outlines, game_over_text = render_outlined_text(font_title, "GAME OVER", (255, 69, 0), (0, 0, 0))
-                    restart_outlines, restart_text = render_outlined_text(font_instruction, "Press R to restart", (255, 255, 255), (0, 0, 0))
-                    menu_outlines, menu_text = render_outlined_text(font_instruction, "Press ESC to return to menu", (200, 200, 200), (0, 0, 0))
-                    
-                    # Draw outlines
-                    def draw_text_with_outlines(screen, outlines, text_surface, x, y):
-                        center_x = x - text_surface.get_width()//2
-                        center_y = y
-                        
-                        for i, surf in enumerate(outlines):
-                            offset_x = center_x + [1, -1, 0, 0, 1, -1, 1, -1][i]
-                            offset_y = center_y + [0, 0, 1, -1, 1, -1, -1, 1][i]
-                            screen.blit(surf, (offset_x, offset_y))
-                        screen.blit(text_surface, (center_x, center_y))
-                    
-                    # Center and draw all texts
-                    draw_text_with_outlines(self.screen, game_over_outlines, game_over_text, 800//2, 220)
-                    draw_text_with_outlines(self.screen, restart_outlines, restart_text, 800//2, 310)
-                    draw_text_with_outlines(self.screen, menu_outlines, menu_text, 800//2, 370)
+                    for i, surf in enumerate(outlines):
+                        offset_x = center_x + [1, -1, 0, 0, 1, -1, 1, -1][i]
+                        offset_y = center_y + [0, 0, 1, -1, 1, -1, -1, 1][i]
+                        screen.blit(surf, (offset_x, offset_y))
+                    screen.blit(text_surface, (center_x, center_y))
+                
+                # Center and draw all texts
+                draw_text_with_outlines(self.screen, game_over_outlines, game_over_text, 800//2, 220)
+                draw_text_with_outlines(self.screen, restart_outlines, restart_text, 800//2, 310)
+                draw_text_with_outlines(self.screen, menu_outlines, menu_text, 800//2, 370)
             
             pygame.display.update()
             self.clock.tick(10)

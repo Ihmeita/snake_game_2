@@ -131,8 +131,10 @@ class Snake:
             return True
         return False
 
-    def draw(self, screen, snake_color, gradient_from=None, gradient_to=None):
+    def draw(self, screen, snake_color, gradient_from=None, gradient_to=None, visible=True):
         """Draw snake on screen"""
+        if not visible:
+            return
         total = len(self.body)
         for i, segment in enumerate(self.body):
             if gradient_from and gradient_to:
@@ -143,7 +145,7 @@ class Snake:
                     int(gradient_from[2] + (gradient_to[2] - gradient_from[2]) * t)
                 )
             else:
-                outline = self.outline_color
+                outline = (255, 255, 255)
             
             pygame.draw.rect(
                 screen, 

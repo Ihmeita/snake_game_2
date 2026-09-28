@@ -17,7 +17,6 @@ class Location:
         self.rules = LocationRules()
         self.background = None
 
-    def draw(self, surface):
-        """Draw location background"""
-        if self.background:
-            surface.blit(self.background, (0, 0))
+    def update(self, dt):
+        """Empty update method for base Location class"""
+        pass
