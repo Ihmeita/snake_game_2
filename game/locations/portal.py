@@ -13,3 +13,6 @@ class PortalLocation(Location):
         self.background = pygame.Surface((width, height))
         self.background.fill((235, 228, 215))
         self.portal_rect = pygame.Rect(10, 10, 30, 30)
+
+    def draw(self, surface):
+        surface.blit(self.background, (0, 0))
