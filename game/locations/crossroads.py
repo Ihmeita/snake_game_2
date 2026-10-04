@@ -1,5 +1,7 @@
 import pygame
 import random
+import math
+import os
 from ..location import Location, LocationRules
 
 
@@ -17,6 +19,25 @@ class CrossroadsLocation(Location):
         self.portal_rect = pygame.Rect(width - 40, height - 40, 30, 30)
         self.portal_active = False
 
+        # Creepy bush (sprite that appears at random places and drifts slowly)
+        bush_path = os.path.join(os.path.dirname(__file__), "..", "assets", "BG_images", "creepy_bush.png")
+        self.bush_size = 120
+        try:
+            bush = pygame.image.load(bush_path).convert_alpha()
+            self.bush_image = pygame.transform.scale(bush, (self.bush_size, self.bush_size))
+        except Exception as e:
+            print(f"Error loading creepy bush: {e}")
+            self.bush_image = None
+        self.bush_rect = pygame.Rect(0, 0, self.bush_size, self.bush_size)
+        self.bush_active = False
+        self.bush_vx = 0.0
+        self.bush_vy = 0.0
+        self.bush_expire_time = 0
+        self.next_bush_direction_change = 0
+        self.curse_active = False
+        self.curse_accum = 0.0
+        self.next_bush_time = pygame.time.get_ticks() + random.randint(35000, 55000)
+
         # Enhanced flicker variables
         self.light_on = False
         self.flicker_intensity = 0.0
@@ -26,6 +47,8 @@ class CrossroadsLocation(Location):
     def update(self, dt):
         super().update(dt)
         current_time = pygame.time.get_ticks()
+
+        prev_light_on = self.light_on
 
         if self.flicker_toggles_left > 0:
             if current_time >= self.next_toggle_ms:
@@ -48,7 +71,64 @@ class CrossroadsLocation(Location):
                 self.flicker_intensity = random.uniform(0.4, 1.0)
                 self.next_toggle_ms = current_time + random.randint(30, 140)
 
+        # Spawn creepy bush: once every 35-55s on a light-on rising edge
+        if self.light_on and not prev_light_on:
+            if not self.bush_active and current_time >= self.next_bush_time:
+                self._spawn_bush()
+
+        # Bush drifts slowly and disappears by itself after 10-20s
+        if self.bush_active:
+            self.bush_rect.x += self.bush_vx * dt
+            self.bush_rect.y += self.bush_vy * dt
+
+            if self.bush_rect.left < 0:
+                self.bush_rect.left = 0
+                self.bush_vx = abs(self.bush_vx)
+            elif self.bush_rect.right > self.width:
+                self.bush_rect.right = self.width
+                self.bush_vx = -abs(self.bush_vx)
+            if self.bush_rect.top < 0:
+                self.bush_rect.top = 0
+                self.bush_vy = abs(self.bush_vy)
+            elif self.bush_rect.bottom > self.height:
+                self.bush_rect.bottom = self.height
+                self.bush_vy = -abs(self.bush_vy)
+
+            if current_time >= self.next_bush_direction_change:
+                speed = random.uniform(30, 60)
+                angle = random.uniform(0, 2 * math.pi)
+                self.bush_vx = speed * math.cos(angle)
+                self.bush_vy = speed * math.sin(angle)
+                self.next_bush_direction_change = current_time + random.randint(1000, 3000)
+
+            if current_time >= self.bush_expire_time:
+                self.bush_active = False
+                self.next_bush_time = current_time + random.randint(35000, 55000)
+
         return self.light_on
+
+    def _spawn_bush(self):
+        max_x = self.width - self.bush_size
+        max_y = self.height - self.bush_size
+        self.bush_rect.topleft = (random.randint(0, max_x), random.randint(0, max_y))
+        speed = random.uniform(30, 60)
+        angle = random.uniform(0, 2 * math.pi)
+        self.bush_vx = speed * math.cos(angle)
+        self.bush_vy = speed * math.sin(angle)
+        self.bush_expire_time = pygame.time.get_ticks() + random.randint(10000, 20000)
+        self.next_bush_direction_change = pygame.time.get_ticks() + random.randint(1000, 3000)
+        self.bush_active = True
+
+    def check_collisions(self, snake):
+        if self.bush_active:
+            for segment in snake.body:
+                segment_rect = pygame.Rect(segment[0], segment[1], snake.block_size, snake.block_size)
+                if segment_rect.colliderect(self.bush_rect):
+                    self.curse_active = True
+                    self.bush_active = False
+                    self.next_bush_time = pygame.time.get_ticks() + random.randint(35000, 55000)
+                    break
+        return False
 
     def draw(self, surface):
         surface.fill((0, 0, 0))
@@ -58,7 +138,7 @@ class CrossroadsLocation(Location):
             overlay.fill((255, 255, 255, alpha))
             surface.blit(overlay, (0, 0))
 
-        if self.portal_active:
-            pygame.draw.rect(surface, (255, 0, 255), self.portal_rect)
+        if self.bush_active and self.light_on and self.bush_image:
+            surface.blit(self.bush_image, self.bush_rect.topleft)
 
         return self.light_on

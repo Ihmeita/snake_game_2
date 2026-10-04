@@ -128,6 +128,7 @@ class Game:
         # Fonts
         font_small = pygame.font.SysFont("Arial", 30)
         font_large = pygame.font.SysFont("Arial", 50)
+        last_curse_time = pygame.time.get_ticks()
         
         # Main game loop
         running = True
@@ -152,6 +153,10 @@ class Game:
                             portal_pending = 0
                             snake.current_location = location  # Set current location reference
                             snake.flower_effect = (current_mode == "flowerfield")  # Enable flower effects for flowerfield
+                            last_curse_time = pygame.time.get_ticks()
+                            if current_mode == "crossroads":
+                                location.curse_active = False
+                                location.curse_accum = 0.0
                             # Load location-specific food images
                             food.set_location_images(f"{current_mode}_food")
                             # Play location-specific music
@@ -203,6 +208,20 @@ class Game:
                         
                         if snake.eat_food(food):
                             food.spawn_food()
+                            if current_mode == "crossroads":
+                                location.curse_active = False
+                                location.curse_accum = 0.0
+                        
+                        # Creepy bush curse: lose 1 point per second while active
+                        if current_mode == "crossroads" and location.curse_active:
+                            curse_now = pygame.time.get_ticks()
+                            location.curse_accum += (curse_now - last_curse_time) / 1000.0
+                            last_curse_time = curse_now
+                            while location.curse_accum >= 1.0:
+                                snake.score = max(0, snake.score - 1)
+                                location.curse_accum -= 1.0
+                        else:
+                            last_curse_time = pygame.time.get_ticks()
                         
                         # Portal check for Crossroads
                         if current_mode == "crossroads" and snake.score >= 22 and not location.portal_active:

@@ -33,10 +33,11 @@ class Food:
                 self.normal_img = pygame.image.load(str(normal_path))
                 self.special_img = pygame.image.load(str(special_path))
                 
-                # Scale images to 93% of block_size (visual only)
+                # Scale images (visual only): normal at 93%, special a bit bigger
                 visual_size = int(self.block_size * 0.93)
+                special_size = int(self.block_size * 1.0)
                 self.normal_img = pygame.transform.scale(self.normal_img, (visual_size, visual_size))
-                self.special_img = pygame.transform.scale(self.special_img, (visual_size, visual_size))
+                self.special_img = pygame.transform.scale(self.special_img, (special_size, special_size))
             else:
                 raise FileNotFoundError("No assets path provided")
         except Exception:
